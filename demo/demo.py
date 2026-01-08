@@ -23,6 +23,7 @@ WINDOW_NAME = "COCO detections"
 def setup_cfg(args):
     # load config from file and command-line arguments
     cfg = get_cfg()
+    print(cfg)
     # To use demo for Panoptic-DeepLab, please uncomment the following two lines.
     # from detectron2.projects.panoptic_deeplab import add_panoptic_deeplab_config  # noqa
     # add_panoptic_deeplab_config(cfg)
@@ -99,17 +100,46 @@ def main() -> None:
 
     cfg = setup_cfg(args)
 
-    demo = VisualizationDemo(cfg)
+    import sys
+    print(sys.version)
 
+    demo = VisualizationDemo(cfg)
+    print('look here')
+    print(args.input)
     if args.input:
+        print('me here')
+        print(os.path.expanduser(args.input[0]))
         if len(args.input) == 1:
+            
+            
             args.input = glob.glob(os.path.expanduser(args.input[0]))
+            
             assert args.input, "The input path(s) was not found"
         for path in tqdm.tqdm(args.input, disable=not args.output):
             # use PIL, to be consistent with evaluation
             img = read_image(path, format="BGR")
+            print('look here at me!!')
+            print(img.shape)
             start_time = time.time()
             predictions, visualized_output = demo.run_on_image(img)
+            print('look hereerere')
+            print(predictions['instances'])
+            #print(predictions['instances'][0].pred_boxes)
+            #print(predictions['instances'])
+            import matplotlib.pyplot as plt
+            #print(predictions['instances'][0].pred_boxes.tensor.cpu().numpy())
+            a = predictions['instances'][0].pred_boxes.tensor.cpu().numpy()[0]
+            b = predictions['instances'][1].pred_boxes.tensor.cpu().numpy()[0]
+            x = [a[0],a[2], b[0],b[2]]
+            y = [-a[1],-a[3], -b[1],-b[3]]
+    
+            plt.scatter(x,y)
+
+            plt.xlim(0,275)
+            plt.ylim(-183,0)
+            plt.show()
+
+
             logger.info(
                 "{}: {} in {:.2f}s".format(
                     path,
@@ -121,7 +151,6 @@ def main() -> None:
                     time.time() - start_time,
                 )
             )
-
             if args.output:
                 if os.path.isdir(args.output):
                     assert os.path.isdir(args.output), args.output
@@ -135,6 +164,7 @@ def main() -> None:
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])
                 if cv2.waitKey(0) == 27:
                     break  # esc to quit
+            
     elif args.webcam:
         assert args.input is None, "Cannot have both --input and --webcam!"
         assert args.output is None, "output not yet supported with --webcam!"
